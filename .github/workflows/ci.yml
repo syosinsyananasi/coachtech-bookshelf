@@ -1,0 +1,75 @@
+name: CI
+
+# main への push と、main 宛の Pull Request で実行する
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    name: Pint & Tests
+    runs-on: ubuntu-latest
+
+    # テスト用の MySQL（ローカルの compose.yaml と同じ 8.4 を使用）
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: testing
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -ppassword"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: PHP をセットアップ
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, pdo_mysql, bcmath
+          coverage: none
+
+      - name: Composer キャッシュを復元
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer/files
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: 依存パッケージをインストール
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: .env を用意
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: コード整形チェック（Laravel Pint）
+        run: vendor/bin/pint --test
+
+      - name: マイグレーション
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: testing
+          DB_USERNAME: root
+          DB_PASSWORD: password
+        run: php artisan migrate --force
+
+      - name: テスト実行
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: testing
+          DB_USERNAME: root
+          DB_PASSWORD: password
+        run: php artisan test
