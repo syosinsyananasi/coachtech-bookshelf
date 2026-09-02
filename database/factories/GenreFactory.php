@@ -10,14 +10,16 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 class GenreFactory extends Factory
 {
     /**
-     * Define the model's default state.
+     * ジャンルの初期値を定義する。
+     *
+     * name は一意制約があるため、連番を付与して衝突を避ける。
      *
      * @return array<string, mixed>
      */
     public function definition(): array
     {
         return [
-            //
+            'name' => 'ジャンル'.fake()->unique()->numberBetween(1, 100000),
         ];
     }
 }
