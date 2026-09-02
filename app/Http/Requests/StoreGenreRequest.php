@@ -7,7 +7,12 @@ use Illuminate\Foundation\Http\FormRequest;
 class StoreGenreRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * このリクエストの実行を許可するか判定する。
+     *
+     * ジャンルには所有者などの認可要件が無く、認証は routes/web.php の
+     * auth ミドルウェアで担保しているため、常に許可する。
+     *
+     * @return bool 常に true
      */
     public function authorize(): bool
     {
@@ -15,7 +20,9 @@ class StoreGenreRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * ジャンル登録のバリデーションルールを返す。
+     *
+     * ジャンル名は必須・255文字以内で、既存のジャンル名と重複してはならない。
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
@@ -31,6 +38,11 @@ class StoreGenreRequest extends FormRequest
         ];
     }
 
+    /**
+     * 日本語のバリデーションメッセージを返す。
+     *
+     * @return array<string, string> ルール名をキーとしたメッセージ
+     */
     public function messages(): array
     {
         return [

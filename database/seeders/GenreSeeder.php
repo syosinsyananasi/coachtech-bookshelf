@@ -8,7 +8,10 @@ use Illuminate\Database\Seeder;
 class GenreSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * ジャンルマスタの初期データを投入する。
+     *
+     * 要件で定められた10件を固定で登録する。firstOrCreate を用いるため、
+     * 繰り返し実行してもジャンル名が重複しない。
      */
     public function run(): void
     {

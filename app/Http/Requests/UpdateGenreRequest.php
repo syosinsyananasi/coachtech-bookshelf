@@ -8,7 +8,12 @@ use Illuminate\Validation\Rule;
 class UpdateGenreRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * このリクエストの実行を許可するか判定する。
+     *
+     * ジャンルには所有者などの認可要件が無く、認証は routes/web.php の
+     * auth ミドルウェアで担保しているため、常に許可する。
+     *
+     * @return bool 常に true
      */
     public function authorize(): bool
     {
@@ -16,7 +21,10 @@ class UpdateGenreRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * ジャンル編集のバリデーションルールを返す。
+     *
+     * 登録時と同等だが、一意性チェックでは編集中のレコード自身を ignore() で除外する。
+     * 除外しないと自分自身にヒットし、名前を変更しない更新が必ず失敗する。
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
@@ -32,6 +40,11 @@ class UpdateGenreRequest extends FormRequest
         ];
     }
 
+    /**
+     * 日本語のバリデーションメッセージを返す。
+     *
+     * @return array<string, string> ルール名をキーとしたメッセージ
+     */
     public function messages(): array
     {
         return [

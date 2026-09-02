@@ -8,10 +8,20 @@ use App\Models\Genre;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 
+/**
+ * ジャンルの CRUD を担当するコントローラ（PG05〜PG08）。
+ *
+ * 全アクションが認証必須で、認可要件は無いため Policy は用いず
+ * routes/web.php の auth ミドルウェアで担保している。
+ */
 class GenreController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * ジャンル一覧を表示する。
+     *
+     * ビューが各ジャンルの書籍数を参照するため、withCount で books_count を付与する。
+     *
+     * @return View ジャンル一覧画面
      */
     public function index(): View
     {
@@ -21,7 +31,9 @@ class GenreController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     * ジャンル登録フォームを表示する。
+     *
+     * @return View ジャンル登録画面
      */
     public function create(): View
     {
@@ -29,7 +41,10 @@ class GenreController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * ジャンルを新規登録する。
+     *
+     * @param  StoreGenreRequest  $request  バリデーション済みのジャンル名
+     * @return RedirectResponse ジャンル一覧へのリダイレクト（成功メッセージ付き）
      */
     public function store(StoreGenreRequest $request): RedirectResponse
     {
@@ -39,7 +54,13 @@ class GenreController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * ジャンル詳細を表示する。
+     *
+     * 紐づく書籍を 10件/ページ で取得する。ビューが各書籍のジャンルを描画するため、
+     * N+1 を避けて genres を Eager Loading している。
+     *
+     * @param  Genre  $genre  表示対象のジャンル
+     * @return View ジャンル詳細画面
      */
     public function show(Genre $genre): View
     {
@@ -49,7 +70,10 @@ class GenreController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * ジャンル編集フォームを表示する。
+     *
+     * @param  Genre  $genre  編集対象のジャンル
+     * @return View ジャンル編集画面
      */
     public function edit(Genre $genre): View
     {
@@ -57,7 +81,11 @@ class GenreController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * ジャンル名を更新する。
+     *
+     * @param  UpdateGenreRequest  $request  バリデーション済みのジャンル名
+     * @param  Genre  $genre  更新対象のジャンル
+     * @return RedirectResponse ジャンル一覧へのリダイレクト（成功メッセージ付き）
      */
     public function update(UpdateGenreRequest $request, Genre $genre): RedirectResponse
     {
@@ -67,7 +95,12 @@ class GenreController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * ジャンルを削除する。
+     *
+     * 書籍が1件でも紐づいている場合は削除せず、エラーメッセージを返す（削除制限の要件）。
+     *
+     * @param  Genre  $genre  削除対象のジャンル
+     * @return RedirectResponse ジャンル一覧へのリダイレクト（成功／エラーメッセージ付き）
      */
     public function destroy(Genre $genre): RedirectResponse
     {
