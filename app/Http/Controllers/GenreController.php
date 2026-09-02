@@ -13,7 +13,9 @@ class GenreController extends Controller
      */
     public function index()
     {
-        //
+        $genres = Genre::withCount('books')->get();
+
+        return view('genres.index', compact('genres'));
     }
 
     /**
@@ -21,7 +23,7 @@ class GenreController extends Controller
      */
     public function create()
     {
-        //
+        return view('genres.create');
     }
 
     /**
@@ -29,7 +31,9 @@ class GenreController extends Controller
      */
     public function store(StoreGenreRequest $request)
     {
-        //
+        Genre::create($request->validated());
+
+        return redirect()->route('genres.index')->with('success', 'ジャンルを作成しました。');
     }
 
     /**
@@ -37,7 +41,9 @@ class GenreController extends Controller
      */
     public function show(Genre $genre)
     {
-        //
+        $books = $genre->books()->with('genres')->paginate(10);
+
+        return view('genres.show', compact('genre', 'books'));
     }
 
     /**
@@ -45,7 +51,7 @@ class GenreController extends Controller
      */
     public function edit(Genre $genre)
     {
-        //
+        return view('genres.edit', compact('genre'));
     }
 
     /**
@@ -53,7 +59,9 @@ class GenreController extends Controller
      */
     public function update(UpdateGenreRequest $request, Genre $genre)
     {
-        //
+        $genre->update($request->validated());
+
+        return redirect()->route('genres.index')->with('success', 'ジャンルを更新しました。');
     }
 
     /**
@@ -61,6 +69,12 @@ class GenreController extends Controller
      */
     public function destroy(Genre $genre)
     {
-        //
+        // 中間テーブルを確認して使用されているものがあれば削除できない
+        if ($genre->books()->exists()) {
+            return redirect()->route('genres.index')->with('error', 'このジャンルには書籍が紐付いているため削除できません。');
+        }
+        $genre->delete();
+
+        return redirect()->route('genres.index')->with('success', 'ジャンルを削除しました。');
     }
 }
