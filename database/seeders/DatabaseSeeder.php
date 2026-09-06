@@ -9,10 +9,16 @@ use Illuminate\Database\Seeder;
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Seed the application's database.
+     * アプリケーションの初期データを投入する。
+     *
+     * 外部キーの依存関係を考慮し、ユーザー → ジャンル → 書籍 の順で呼び出す。
      */
     public function run(): void
     {
-        $this->call(GenreSeeder::class);
+        $this->call([
+            UserSeeder::class,
+            GenreSeeder::class,
+            BookSeeder::class,
+        ]);
     }
 }
