@@ -80,4 +80,19 @@ class ReviewPolicy
     {
         return $user->id === $review->user_id;
     }
+
+    /**
+     * ユーザーが対象のレビューにいいねできるか判定する。
+     *
+     * 自分のレビューへのいいねは許可しない。提供済み Blade はボタンを出し分けないため、
+     * 投稿者本人が押した場合はコントローラの authorize() で 403 となる。
+     *
+     * @param  User  $user  ログイン中のユーザー
+     * @param  Review  $review  いいね対象のレビュー
+     * @return bool 投稿者本人でなければ true
+     */
+    public function like(User $user, Review $review): bool
+    {
+        return $user->id !== $review->user_id;
+    }
 }
