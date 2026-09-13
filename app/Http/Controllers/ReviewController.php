@@ -10,9 +10,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 /**
- * レビューの投稿・編集・削除を担当するコントローラ（PG02・PG09）。
+ * レビューの投稿・編集・削除・いいねを担当するコントローラ（PG02・PG09）。
  *
- * すべて認証必須。編集・削除は投稿者本人のみ許可するため ReviewPolicy による認可を行う。
+ * すべて認証必須。編集・削除は投稿者本人のみ、いいねは投稿者本人以外のみ許可するため ReviewPolicy による認可を行う。
  * レビューは書籍詳細画面に表示されるため、各処理後は書籍詳細へリダイレクトする。
  */
 class ReviewController extends Controller
@@ -82,5 +82,24 @@ class ReviewController extends Controller
         $review->delete();
 
         return redirect()->route('books.show', $review->book_id)->with('success', 'レビューを削除しました。');
+    }
+
+    /**
+     * レビューへのいいねを切り替える。
+     *
+     * 未登録なら追加、登録済みなら解除する（トグル）。
+     * 自分のレビューへのいいねは ReviewPolicy で拒否する。
+     * 中間テーブル review_likes を likedByUsers() 経由で操作するため、FormRequest は不要。
+     *
+     * @param  Review  $review  いいね対象のレビュー
+     * @return RedirectResponse 書籍詳細へのリダイレクト
+     */
+    public function like(Review $review): RedirectResponse
+    {
+        $this->authorize('like', $review);
+
+        $review->likedByUsers()->toggle(auth()->id());
+
+        return redirect()->route('books.show', $review->book_id);
     }
 }
