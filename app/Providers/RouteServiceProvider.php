@@ -11,13 +11,16 @@ use Illuminate\Support\Facades\Route;
 class RouteServiceProvider extends ServiceProvider
 {
     /**
-     * The path to your application's "home" route.
+     * ログイン済みユーザーを送る既定のパス。
      *
-     * Typically, users are redirected here after authentication.
+     * RedirectIfAuthenticated ミドルウェアが、ログイン済みで /login や /register を開いたときの
+     * リダイレクト先として参照する。機能要件「既にログイン済みでアクセスすると書籍一覧にリダイレクト」に合わせ、
+     * Laravel 初期値の /home（ルート未定義で 404 になる）から書籍一覧に変更した。
+     * ログイン・登録成功後の遷移先は Fortify 側の config('fortify.home') が担うため、同じ値にそろえている。
      *
      * @var string
      */
-    public const HOME = '/home';
+    public const HOME = '/books';
 
     /**
      * Define your route model bindings, pattern filters, and other route configuration.
