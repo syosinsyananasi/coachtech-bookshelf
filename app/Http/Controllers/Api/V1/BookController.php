@@ -73,7 +73,8 @@ class BookController extends Controller
     /**
      * 書籍詳細を取得する。
      *
-     * ジャンルとレビュー（投稿者名付き）を含める。存在しない ID はルートモデルバインディングにより 404 となる。
+     * ジャンルとレビュー（投稿者名付き）を含める。
+     * 存在しない ID は routes/api.php の missing() により 404 と {"error": "書籍が見つかりませんでした。"} を返す。
      *
      * @param  Book  $book  取得対象の書籍
      * @return BookResource 書籍詳細
