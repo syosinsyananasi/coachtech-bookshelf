@@ -80,7 +80,7 @@ class BookDestroyTest extends TestCase
     {
         $this->deleteJson(route('api.v1.books.destroy', 999))
             ->assertNotFound()
-            ->assertJsonStructure(['message']);
+            ->assertExactJson(['error' => '書籍が見つかりませんでした。']);
 
         $this->assertDatabaseHas('books', ['id' => $this->book->id]);
     }

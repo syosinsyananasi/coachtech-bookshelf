@@ -72,12 +72,12 @@ class BookShowTest extends TestCase
     }
 
     /**
-     * 存在しない ID を指定すると 404 の JSON が返ること。
+     * 存在しない ID を指定すると 404 と {"error": "書籍が見つかりませんでした。"} が返ること（PM 確認済みの仕様）。
      */
     public function test_not_found_for_missing_book(): void
     {
         $this->getJson(route('api.v1.books.show', 999))
             ->assertNotFound()
-            ->assertJsonStructure(['message']);
+            ->assertExactJson(['error' => '書籍が見つかりませんでした。']);
     }
 }
