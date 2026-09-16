@@ -6,11 +6,13 @@ use App\Models\Book;
 use App\Models\Genre;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 /**
  * AP03 書籍登録API。バリデーションは Api\V1\StoreBookRequest のルールに 1対1 で対応させる。
- * 登録者が user_id で指定したユーザーになること、ジャンルが中間テーブルへ紐付くこと、201 が返ることを重点的に検証する。
+ * 登録者がトークンの持ち主になること、ジャンルが中間テーブルへ紐付くこと、201 が返ることを重点的に検証する。
+ * 認証（未認証の 401）は BookAuthorizationTest で扱う。
  */
 class BookStoreTest extends TestCase
 {
@@ -23,6 +25,7 @@ class BookStoreTest extends TestCase
         parent::setUp();
 
         $this->user = User::factory()->create();
+        Sanctum::actingAs($this->user);
     }
 
     /**
@@ -34,7 +37,6 @@ class BookStoreTest extends TestCase
     private function validData(array $overrides = []): array
     {
         return array_merge([
-            'user_id' => $this->user->id,
             'title' => 'リーダブルコード',
             'author' => 'Dustin Boswell',
             'isbn' => '9784873115658',
@@ -59,9 +61,9 @@ class BookStoreTest extends TestCase
     }
 
     /**
-     * 書籍が保存され、登録者が user_id で指定したユーザーになること。
+     * 書籍が保存され、登録者がトークンの持ち主になること（$request->user() 経由の作成の検証）。
      */
-    public function test_book_is_stored_with_specified_user_as_owner(): void
+    public function test_book_is_stored_with_token_owner_as_owner(): void
     {
         $this->postJson(route('api.v1.books.store'), $this->validData());
 
@@ -107,27 +109,17 @@ class BookStoreTest extends TestCase
     }
 
     /**
-     * user_id が未指定のとき 422 と日本語メッセージが返り、保存されないこと。
+     * 本文に user_id を送っても無視され、登録者はトークンの持ち主のままであること（なりすまし防止）。
      */
-    public function test_user_id_is_required(): void
+    public function test_user_id_in_request_body_is_ignored(): void
     {
-        $this->postJson(route('api.v1.books.store'), $this->validData(['user_id' => null]))
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['user_id' => '登録者IDは必須です。']);
+        $other = User::factory()->create();
 
-        $this->assertDatabaseCount('books', 0);
-    }
+        $this->postJson(route('api.v1.books.store'), $this->validData(['user_id' => $other->id]))
+            ->assertCreated()
+            ->assertJsonPath('data.user_id', $this->user->id);
 
-    /**
-     * 存在しない user_id のとき exists エラーになること。
-     */
-    public function test_user_id_must_exist(): void
-    {
-        $this->postJson(route('api.v1.books.store'), $this->validData(['user_id' => 999]))
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['user_id' => '指定された登録者は存在しません。']);
-
-        $this->assertDatabaseCount('books', 0);
+        $this->assertDatabaseHas('books', ['isbn' => '9784873115658', 'user_id' => $this->user->id]);
     }
 
     /**
