@@ -48,8 +48,10 @@ class FortifyServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($throttleKey);
         });
 
-        RateLimiter::for('two-factor', function (Request $request) {
-            return Limit::perMinute(5)->by($request->session()->get('login.id'));
-        });
+        // 二要素認証は config/fortify.php の features で無効化しているため、対応する RateLimiter も無効化している。
+        // 有効化する際は features と limiters の two-factor と合わせて戻すこと。
+        // RateLimiter::for('two-factor', function (Request $request) {
+        //     return Limit::perMinute(5)->by($request->session()->get('login.id'));
+        // });
     }
 }

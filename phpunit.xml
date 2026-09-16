@@ -16,6 +16,15 @@
         <include>
             <directory>app</directory>
         </include>
+        <exclude>
+            <file>app/Console/Kernel.php</file>
+            <file>app/Http/Middleware/TrustHosts.php</file>
+            <file>app/Providers/BroadcastServiceProvider.php</file>
+            <file>app/Actions/Fortify/PasswordValidationRules.php</file>
+            <file>app/Actions/Fortify/ResetUserPassword.php</file>
+            <file>app/Actions/Fortify/UpdateUserPassword.php</file>
+            <file>app/Actions/Fortify/UpdateUserProfileInformation.php</file>
+        </exclude>
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
