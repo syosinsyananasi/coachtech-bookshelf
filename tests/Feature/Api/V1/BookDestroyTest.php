@@ -7,11 +7,13 @@ use App\Models\Genre;
 use App\Models\Review;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 /**
- * AP05 書籍削除API。204 が返り書籍本体と関連データ（レビュー・お気に入り・ジャンル紐付け）が消えること、
+ * AP05 書籍削除API。所有者本人の削除で 204 が返り、書籍本体と関連データ（レビュー・お気に入り・ジャンル紐付け）が消えること、
  * 存在しない ID で 404 になることを検証する。
+ * 認証・認可（未認証の 401、所有者以外の 403）は BookAuthorizationTest で扱う。
  */
 class BookDestroyTest extends TestCase
 {
@@ -23,7 +25,9 @@ class BookDestroyTest extends TestCase
     {
         parent::setUp();
 
-        $this->book = Book::factory()->create();
+        $owner = User::factory()->create();
+        $this->book = Book::factory()->create(['user_id' => $owner->id]);
+        Sanctum::actingAs($owner);
     }
 
     /**

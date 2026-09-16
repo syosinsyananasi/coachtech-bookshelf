@@ -6,11 +6,13 @@ use App\Models\Book;
 use App\Models\Genre;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 /**
- * AP04 書籍更新API。更新内容の反映、ISBN 一意チェックからの自身除外、ジャンルの sync、存在しない ID で 404 になることを検証する。
+ * AP04 書籍更新API。所有者本人による更新内容の反映、ISBN 一意チェックからの自身除外、ジャンルの sync、存在しない ID で 404 になることを検証する。
  * バリデーションは Api\V1\UpdateBookRequest のルールに対応させる。
+ * 認証・認可（未認証の 401、所有者以外の 403）は BookAuthorizationTest で扱う。
  */
 class BookUpdateTest extends TestCase
 {
@@ -30,6 +32,7 @@ class BookUpdateTest extends TestCase
             'title' => 'リーダブルコード',
             'isbn' => '9784873115658',
         ]);
+        Sanctum::actingAs($this->owner);
     }
 
     /**
@@ -41,7 +44,6 @@ class BookUpdateTest extends TestCase
     private function validData(array $overrides = []): array
     {
         return array_merge([
-            'user_id' => $this->owner->id,
             'title' => 'リーダブルコード 第2版',
             'author' => 'Dustin Boswell',
             'isbn' => '9784873115658',
@@ -72,17 +74,17 @@ class BookUpdateTest extends TestCase
     }
 
     /**
-     * user_id を変えると登録者が変更されること（user()->associate() の検証）。
+     * 本文に user_id を送っても登録者は変更されないこと（所有権の付け替え防止）。
      */
-    public function test_owner_can_be_changed(): void
+    public function test_owner_cannot_be_changed_by_request_body(): void
     {
-        $newOwner = User::factory()->create();
+        $other = User::factory()->create();
 
-        $this->putJson(route('api.v1.books.update', $this->book), $this->validData(['user_id' => $newOwner->id]))
+        $this->putJson(route('api.v1.books.update', $this->book), $this->validData(['user_id' => $other->id]))
             ->assertOk()
-            ->assertJsonPath('data.user_id', $newOwner->id);
+            ->assertJsonPath('data.user_id', $this->owner->id);
 
-        $this->assertDatabaseHas('books', ['id' => $this->book->id, 'user_id' => $newOwner->id]);
+        $this->assertDatabaseHas('books', ['id' => $this->book->id, 'user_id' => $this->owner->id]);
     }
 
     /**
@@ -136,18 +138,6 @@ class BookUpdateTest extends TestCase
             ->assertJsonValidationErrors(['title' => 'タイトルは必須です。']);
 
         $this->assertDatabaseHas('books', ['id' => $this->book->id, 'title' => 'リーダブルコード']);
-    }
-
-    /**
-     * user_id が存在しないユーザーのとき exists エラーになること。
-     */
-    public function test_user_id_must_exist(): void
-    {
-        $this->putJson(route('api.v1.books.update', $this->book), $this->validData(['user_id' => 999]))
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['user_id' => '指定された登録者は存在しません。']);
-
-        $this->assertDatabaseHas('books', ['id' => $this->book->id, 'user_id' => $this->owner->id]);
     }
 
     /**

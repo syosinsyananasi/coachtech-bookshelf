@@ -15,7 +15,7 @@ class UpdateBookRequest extends FormRequest
     /**
      * このリクエストの実行を許可するか判定する。
      *
-     * 基礎段階の公開 API は認証なしのため、常に許可する（応用で Sanctum + BookPolicy を導入する）。
+     * 認証は routes/api.php の auth:sanctum、所有者チェックはコントローラで BookPolicy を適用して行うため、常に許可する。
      *
      * @return bool 常に true
      */
@@ -35,7 +35,6 @@ class UpdateBookRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => ['required', 'integer', 'exists:users,id'],
             'title' => ['required', 'string', 'max:255'],
             'author' => ['required', 'string', 'max:255'],
             'isbn' => ['required', 'string', 'size:13', Rule::unique('books', 'isbn')->ignore($this->book)],
@@ -55,9 +54,6 @@ class UpdateBookRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'user_id.required' => '登録者IDは必須です。',
-            'user_id.integer' => '登録者IDは整数で入力してください。',
-            'user_id.exists' => '指定された登録者は存在しません。',
             'title.required' => 'タイトルは必須です。',
             'title.string' => 'タイトルは文字列で入力してください。',
             'title.max' => 'タイトルは255文字以内で入力してください。',
