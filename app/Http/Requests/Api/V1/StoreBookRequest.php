@@ -7,14 +7,14 @@ use Illuminate\Foundation\Http\FormRequest;
 /**
  * 公開API 書籍登録（AP03）のバリデーション。
  *
- * Web 版の StoreBookRequest と同等のルールに加え、セッションが無いため登録者 ID をリクエストで受け取り検証する。
+ * Web 版の StoreBookRequest と同等のルール。登録者は Sanctum トークンの持ち主になるため、リクエストでは受け取らない。
  */
 class StoreBookRequest extends FormRequest
 {
     /**
      * このリクエストの実行を許可するか判定する。
      *
-     * 基礎段階の公開 API は認証なしのため、常に許可する（応用で Sanctum を導入する）。
+     * 認証は routes/api.php の auth:sanctum で担保し、登録に所有者チェックは不要なため、常に許可する。
      *
      * @return bool 常に true
      */
@@ -28,14 +28,12 @@ class StoreBookRequest extends FormRequest
      *
      * ISBN は 13桁 の文字列で、既存の書籍と重複してはならない。
      * 説明・画像URL は任意入力、ジャンルは 1つ以上を既存ジャンルから選択する。
-     * user_id は存在するユーザーの ID であること。
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
-            'user_id' => ['required', 'integer', 'exists:users,id'],
             'title' => ['required', 'string', 'max:255'],
             'author' => ['required', 'string', 'max:255'],
             'isbn' => ['required', 'string', 'size:13', 'unique:books,isbn'],
@@ -55,9 +53,6 @@ class StoreBookRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'user_id.required' => '登録者IDは必須です。',
-            'user_id.integer' => '登録者IDは整数で入力してください。',
-            'user_id.exists' => '指定された登録者は存在しません。',
             'title.required' => 'タイトルは必須です。',
             'title.string' => 'タイトルは文字列で入力してください。',
             'title.max' => 'タイトルは255文字以内で入力してください。',

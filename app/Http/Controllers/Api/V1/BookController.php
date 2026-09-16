@@ -8,7 +8,6 @@ use App\Http\Requests\Api\V1\StoreBookRequest;
 use App\Http\Requests\Api\V1\UpdateBookRequest;
 use App\Http\Resources\BookResource;
 use App\Models\Book;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -17,9 +16,10 @@ use Illuminate\Http\Response;
 /**
  * 公開API 書籍の CRUD を担当するコントローラ（AP01〜AP05）。
  *
- * 基礎段階では認証なしで動作し、登録者はリクエストの user_id で指定する。
+ * 一覧・詳細は認証なし。登録・更新・削除は Sanctum の Bearer トークン認証を必須とし（routes/api.php の auth:sanctum）、
+ * 登録者はトークンの持ち主、更新・削除は BookPolicy で所有者本人のみ許可する。
  * レスポンスは BookResource で整形し、成功時のステータスは登録 201・更新 200・削除 204 を返す。
- * 応用段階で書き込み系に Sanctum 認証と BookPolicy による認可を追加する。
+ * 未認証は 401、他人の書籍への操作は 403 となる。
  */
 class BookController extends Controller
 {
@@ -52,17 +52,17 @@ class BookController extends Controller
     /**
      * 書籍を新規登録する。
      *
-     * 登録者のリレーション経由で作成することで user_id を設定する（Book の $fillable に user_id を含めないため）。
-     * ジャンルは保存後に中間テーブルへ sync する。
+     * 登録者は Sanctum トークンの持ち主（$request->user()）とし、そのリレーション経由で作成することで
+     * user_id を設定する（Book の $fillable に user_id を含めないため）。ジャンルは保存後に中間テーブルへ sync する。
      *
-     * @param  StoreBookRequest  $request  バリデーション済みの書籍情報・ジャンルID・登録者ID
+     * @param  StoreBookRequest  $request  バリデーション済みの書籍情報・ジャンルID
      * @return JsonResponse 登録した書籍（201 Created）
      */
     public function store(StoreBookRequest $request): JsonResponse
     {
         $validated = $request->validated();
 
-        $book = User::findOrFail($validated['user_id'])->books()->create($validated);
+        $book = $request->user()->books()->create($validated);
         $book->genres()->sync($validated['genres']);
 
         return (new BookResource($this->withDetails($book)))
@@ -86,20 +86,20 @@ class BookController extends Controller
     /**
      * 書籍を更新する。
      *
-     * 登録者の変更は user()->associate() で行う（Book の $fillable に user_id を含めないため）。
-     * ジャンルは sync() で送信された内容に置き換える。
+     * 所有者本人のみ許可するため BookPolicy::update で認可する（トークンの持ち主と書籍の user_id を比較）。
+     * 登録者は変更しない。ジャンルは sync() で送信された内容に置き換える。
      *
-     * @param  UpdateBookRequest  $request  バリデーション済みの書籍情報・ジャンルID・登録者ID
+     * @param  UpdateBookRequest  $request  バリデーション済みの書籍情報・ジャンルID
      * @param  Book  $book  更新対象の書籍
      * @return BookResource 更新後の書籍
      */
     public function update(UpdateBookRequest $request, Book $book): BookResource
     {
+        $this->authorize('update', $book);
+
         $validated = $request->validated();
 
-        $book->fill($validated);
-        $book->user()->associate($validated['user_id']);
-        $book->save();
+        $book->update($validated);
         $book->genres()->sync($validated['genres']);
 
         return new BookResource($this->withDetails($book));
@@ -108,6 +108,7 @@ class BookController extends Controller
     /**
      * 書籍を削除する。
      *
+     * 所有者本人のみ許可するため BookPolicy::delete で認可する。
      * 関連するレビュー・お気に入り・ジャンル紐付けは外部キーの onDelete('cascade') により自動で削除される。
      *
      * @param  Book  $book  削除対象の書籍
@@ -115,6 +116,8 @@ class BookController extends Controller
      */
     public function destroy(Book $book): Response
     {
+        $this->authorize('delete', $book);
+
         $book->delete();
 
         return response()->noContent();
