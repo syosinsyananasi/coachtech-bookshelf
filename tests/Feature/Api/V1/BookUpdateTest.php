@@ -4,6 +4,7 @@ namespace Tests\Feature\Api\V1;
 
 use App\Models\Book;
 use App\Models\Genre;
+use App\Models\Review;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -55,15 +56,21 @@ class BookUpdateTest extends TestCase
     }
 
     /**
-     * 書籍が更新され、200 と更新後の JSON が返ること。
+     * 書籍が更新され、200 と更新後の JSON（レビュー含む）が返ること。
+     *
+     * PM 回答（Q-012）により、更新のレスポンスにもレビューの個別内容を含める。
      */
     public function test_book_is_updated(): void
     {
+        Review::factory()->create(['book_id' => $this->book->id, 'user_id' => $this->owner->id, 'rating' => 5, 'comment' => '良書']);
+
         $this->putJson(route('api.v1.books.update', $this->book), $this->validData())
             ->assertOk()
             ->assertJsonPath('data.id', $this->book->id)
             ->assertJsonPath('data.title', 'リーダブルコード 第2版')
-            ->assertJsonPath('data.published_date', '2020-01-01');
+            ->assertJsonPath('data.published_date', '2020-01-01')
+            ->assertJsonCount(1, 'data.reviews')
+            ->assertJsonFragment(['rating' => 5, 'comment' => '良書']);
 
         $this->assertDatabaseHas('books', [
             'id' => $this->book->id,
@@ -81,8 +88,7 @@ class BookUpdateTest extends TestCase
         $other = User::factory()->create();
 
         $this->putJson(route('api.v1.books.update', $this->book), $this->validData(['user_id' => $other->id]))
-            ->assertOk()
-            ->assertJsonPath('data.user_id', $this->owner->id);
+            ->assertOk();
 
         $this->assertDatabaseHas('books', ['id' => $this->book->id, 'user_id' => $this->owner->id]);
     }

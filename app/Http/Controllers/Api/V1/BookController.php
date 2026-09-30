@@ -81,7 +81,7 @@ class BookController extends Controller
      */
     public function show(Book $book): BookResource
     {
-        return new BookResource($this->withDetails($book->load('reviews.user')));
+        return new BookResource($this->withDetails($book));
     }
 
     /**
@@ -125,15 +125,16 @@ class BookController extends Controller
     }
 
     /**
-     * レスポンスに必要なジャンル・平均評価・レビュー件数を書籍に読み込む。
+     * レスポンスに必要なジャンル・レビュー（投稿者付き）・平均評価・レビュー件数を書籍に読み込む。
      *
-     * 単一の書籍を返す store / show / update で共通して使う。
+     * 単一の書籍を返す store / show / update で共通して使う。PM 回答（Q-012）により
+     * レビューの個別内容は詳細だけでなく登録・更新のレスポンスにも含める（一覧のみ省略）。
      *
      * @param  Book  $book  対象の書籍
      * @return Book リレーションと集計値を読み込んだ書籍
      */
     private function withDetails(Book $book): Book
     {
-        return $book->load('genres')->loadAvg('reviews', 'rating')->loadCount('reviews');
+        return $book->load('genres', 'reviews.user')->loadAvg('reviews', 'rating')->loadCount('reviews');
     }
 }
