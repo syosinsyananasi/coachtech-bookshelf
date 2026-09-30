@@ -75,4 +75,16 @@ class Book extends Model
     {
         return $this->hasMany(Review::class);
     }
+
+    /**
+     * この書籍を対象にした読書計画（★応用）。
+     *
+     * 1対多の関係。書籍削除時は外部キーの cascade で計画も削除される。
+     *
+     * @return HasMany<ReadingPlan>
+     */
+    public function readingPlans(): HasMany
+    {
+        return $this->hasMany(ReadingPlan::class);
+    }
 }
