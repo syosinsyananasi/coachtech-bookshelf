@@ -88,8 +88,7 @@ class BookUpdateTest extends TestCase
         $other = User::factory()->create();
 
         $this->putJson(route('api.v1.books.update', $this->book), $this->validData(['user_id' => $other->id]))
-            ->assertOk()
-            ->assertJsonPath('data.user_id', $this->owner->id);
+            ->assertOk();
 
         $this->assertDatabaseHas('books', ['id' => $this->book->id, 'user_id' => $this->owner->id]);
     }

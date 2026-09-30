@@ -144,7 +144,8 @@ class BookAuthorizationTest extends TestCase
         Sanctum::actingAs($user);
 
         $this->postJson(route('api.v1.books.store'), $this->validData())
-            ->assertCreated()
-            ->assertJsonPath('data.user_id', $user->id);
+            ->assertCreated();
+
+        $this->assertDatabaseHas('books', ['user_id' => $user->id]);
     }
 }

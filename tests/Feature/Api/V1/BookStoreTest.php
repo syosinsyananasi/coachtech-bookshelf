@@ -55,7 +55,7 @@ class BookStoreTest extends TestCase
         $this->postJson(route('api.v1.books.store'), $this->validData())
             ->assertCreated()
             ->assertJsonPath('data.title', 'リーダブルコード')
-            ->assertJsonPath('data.user_id', $this->user->id)
+            ->assertJsonMissingPath('data.user_id')
             ->assertJsonPath('data.reviews_count', 0)
             ->assertJsonPath('data.reviews', [])
             ->assertJsonStructure(['data' => ['id', 'genres', 'reviews']]);
@@ -117,8 +117,7 @@ class BookStoreTest extends TestCase
         $other = User::factory()->create();
 
         $this->postJson(route('api.v1.books.store'), $this->validData(['user_id' => $other->id]))
-            ->assertCreated()
-            ->assertJsonPath('data.user_id', $this->user->id);
+            ->assertCreated();
 
         $this->assertDatabaseHas('books', ['isbn' => '9784873115658', 'user_id' => $this->user->id]);
     }

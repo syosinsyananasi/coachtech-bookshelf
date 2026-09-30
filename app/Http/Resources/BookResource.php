@@ -17,7 +17,8 @@ class BookResource extends JsonResource
      * 書籍を配列に変換する。
      *
      * average_rating はレビューが無い書籍では null、ある場合は小数第 2 位に丸める。
-     * reviews は詳細でのみ読み込むため、一覧のレスポンスには含まれない。
+     * reviews は詳細・登録・更新で読み込むため、一覧のレスポンスには含まれない。
+     * 登録者の user_id は返さない（PM 回答 Q-012 の項目に無く、公開 API の利用者が使う場面も無いため）。
      *
      * @return array<string, mixed>
      */
@@ -25,7 +26,6 @@ class BookResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'user_id' => $this->user_id,
             'title' => $this->title,
             'author' => $this->author,
             'isbn' => $this->isbn,
