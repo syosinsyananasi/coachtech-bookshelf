@@ -57,7 +57,8 @@ class BookStoreTest extends TestCase
             ->assertJsonPath('data.title', 'リーダブルコード')
             ->assertJsonPath('data.user_id', $this->user->id)
             ->assertJsonPath('data.reviews_count', 0)
-            ->assertJsonStructure(['data' => ['id', 'genres']]);
+            ->assertJsonPath('data.reviews', [])
+            ->assertJsonStructure(['data' => ['id', 'genres', 'reviews']]);
     }
 
     /**
