@@ -116,7 +116,7 @@ class BookAuthorizationTest extends TestCase
 
         $this->putJson(route('api.v1.books.update', $this->book), $this->validData())
             ->assertForbidden()
-            ->assertJson(['message' => 'This action is unauthorized.']);
+            ->assertExactJson(['error' => 'この操作を実行する権限がありません。']);
 
         $this->assertDatabaseHas('books', ['id' => $this->book->id, 'title' => '元のタイトル']);
     }
@@ -129,7 +129,8 @@ class BookAuthorizationTest extends TestCase
         Sanctum::actingAs(User::factory()->create());
 
         $this->deleteJson(route('api.v1.books.destroy', $this->book))
-            ->assertForbidden();
+            ->assertForbidden()
+            ->assertExactJson(['error' => 'この操作を実行する権限がありません。']);
 
         $this->assertDatabaseHas('books', ['id' => $this->book->id]);
     }
