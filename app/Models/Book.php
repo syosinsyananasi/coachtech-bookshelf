@@ -30,6 +30,17 @@ class Book extends Model
     ];
 
     /**
+     * 属性のキャスト。
+     *
+     * published_date は Carbon に変換する。★応用の Blade が format('Y-m-d') を呼ぶため。
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'published_date' => 'date',
+    ];
+
+    /**
      * この書籍に紐づくジャンル。
      *
      * 中間テーブル book_genre を介した多対多。
