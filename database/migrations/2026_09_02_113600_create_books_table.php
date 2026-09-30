@@ -16,8 +16,8 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('title');
             $table->string('author');
-            $table->string('isbn', 13)->unique();
-            $table->date('published_date');
+            $table->string('isbn', 13)->nullable()->unique(); // ★応用: 任意入力（PM 回答 No.12）。unique は NULL を重複扱いしない
+            $table->date('published_date')->nullable(); // ★応用: 任意入力（データ一覧 ★DR01）
             $table->text('description')->nullable();
             $table->string('image_url')->nullable();
             $table->timestamps();

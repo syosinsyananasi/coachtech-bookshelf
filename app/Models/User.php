@@ -92,4 +92,16 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Book::class, 'favorites');
     }
+
+    /**
+     * このユーザーの読書計画（★応用）。
+     *
+     * 1対多の関係。
+     *
+     * @return HasMany<ReadingPlan>
+     */
+    public function readingPlans(): HasMany
+    {
+        return $this->hasMany(ReadingPlan::class);
+    }
 }
