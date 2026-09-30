@@ -109,6 +109,6 @@ class BookIndexTest extends TestCase
     {
         $this->get(route('books.index'))
             ->assertOk()
-            ->assertSee('書籍が登録されていません。');
+            ->assertSee('書籍が見つかりませんでした。');
     }
 }
