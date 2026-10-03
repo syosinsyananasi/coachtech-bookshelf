@@ -31,4 +31,10 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // ★応用: ISBN 検索で使う Google Books API。キーは任意（無くても動く。設定すると利用上限が自分のプロジェクト単位になる）
+    'google_books' => [
+        'url' => env('GOOGLE_BOOKS_API_URL', 'https://www.googleapis.com/books/v1/volumes'),
+        'key' => env('GOOGLE_BOOKS_API_KEY'),
+    ],
+
 ];
