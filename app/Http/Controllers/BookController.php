@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\BookIndexRequest;
 use App\Http\Requests\StoreBookRequest;
 use App\Http\Requests\UpdateBookRequest;
 use App\Models\Book;
 use App\Models\Genre;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -18,18 +20,50 @@ use Illuminate\View\View;
 class BookController extends Controller
 {
     /**
-     * 書籍一覧を表示する。
+     * 書籍一覧を表示する（★検索・絞り込み・ソート対応）。
      *
-     * 最新の登録順に 10件/ページ で取得する。ビューが各書籍のジャンルを描画するため、
-     * N+1 を避けて genres を Eager Loading している。
+     * keyword はタイトル・著者名の部分一致、genre はジャンルによる絞り込み、sort は並び順。
+     * 10件/ページ で取得し、検索条件はページネーションのリンクに引き継ぐ。
+     * ビューが各書籍のジャンルと絞り込み用のジャンル一覧を描画するため、genres を Eager Loading し全ジャンルも渡す。
      *
+     * @param  BookIndexRequest  $request  バリデーション済みの検索パラメータ
      * @return View 書籍一覧画面
      */
-    public function index(): View
+    public function index(BookIndexRequest $request): View
     {
-        $books = Book::with('genres')->latest()->paginate(10);
+        $validated = $request->validated();
 
-        return view('books.index', compact('books'));
+        $query = Book::with('genres')
+            ->withAvg('reviews', 'rating')
+            ->when($validated['keyword'] ?? null, fn (Builder $query, string $keyword) => $query->whereAny(['title', 'author'], 'like', "%{$keyword}%"))
+            ->when($validated['genre'] ?? null, fn (Builder $query, int $genreId) => $query->whereRelation('genres', 'genres.id', $genreId));
+
+        $books = $this->applySort($query, $validated['sort'] ?? 'newest')
+            ->paginate(10)
+            ->appends($validated);
+        $genres = Genre::all();
+
+        return view('books.index', compact('books', 'genres'));
+    }
+
+    /**
+     * 一覧の並び順をクエリに適用する。
+     *
+     * rating は平均評価の高い順で、レビューが無い書籍（平均が NULL）は MySQL の DESC で末尾に並ぶ。
+     * 平均が同じ場合と newest は登録日時の新しい順、同時刻なら ID の大きい順で安定させる。
+     *
+     * @param  Builder<Book>  $query  絞り込み済みのクエリ
+     * @param  string  $sort  newest / oldest / rating / title
+     * @return Builder<Book> 並び順を適用したクエリ
+     */
+    private function applySort(Builder $query, string $sort): Builder
+    {
+        return match ($sort) {
+            'oldest' => $query->oldest(),
+            'title' => $query->orderBy('title'),
+            'rating' => $query->orderByDesc('reviews_avg_rating')->latest()->orderByDesc('id'),
+            default => $query->latest()->orderByDesc('id'),
+        };
     }
 
     /**
