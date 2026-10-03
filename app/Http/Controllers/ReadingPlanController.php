@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ReadingPlanIndexRequest;
+use App\Http\Requests\StoreReadingPlanRequest;
+use App\Models\Book;
 use App\Models\ReadingPlan;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 /**
@@ -37,5 +40,35 @@ class ReadingPlanController extends Controller
             ->get();
 
         return view('reading-plans.index', compact('readingPlans', 'currentStatus'));
+    }
+
+    /**
+     * 読書計画作成フォームを表示する。
+     *
+     * 書籍プルダウンを描画するため、全書籍をタイトル順で渡す。
+     *
+     * @return View 読書計画作成画面
+     */
+    public function create(): View
+    {
+        $books = Book::orderBy('title')->get();
+
+        return view('reading-plans.create', compact('books'));
+    }
+
+    /**
+     * 読書計画を新規登録する。
+     *
+     * ログインユーザーのリレーション経由で作成することで user_id を自動設定する。
+     * status は DB の既定値（in_progress）、completed_at は null のまま。
+     *
+     * @param  StoreReadingPlanRequest  $request  バリデーション済みの書籍 ID と期日
+     * @return RedirectResponse 一覧へのリダイレクト（成功メッセージ付き）
+     */
+    public function store(StoreReadingPlanRequest $request): RedirectResponse
+    {
+        $request->user()->readingPlans()->create($request->validated());
+
+        return redirect()->route('reading-plans.index')->with('success', '読書計画を作成しました。');
     }
 }
