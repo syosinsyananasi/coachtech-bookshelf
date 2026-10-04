@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
-// use Illuminate\Support\Facades\Gate;
+use App\Policies\NotificationPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+// use Illuminate\Support\Facades\Gate;
+use Illuminate\Notifications\DatabaseNotification;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -13,7 +15,8 @@ class AuthServiceProvider extends ServiceProvider
      * @var array<class-string, class-string>
      */
     protected $policies = [
-        //
+        // Laravel 標準の通知モデルは命名規約で自動登録されないため明示する（★応用）
+        DatabaseNotification::class => NotificationPolicy::class,
     ];
 
     /**
