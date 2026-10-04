@@ -12,13 +12,15 @@ class BookSeeder extends Seeder
     /**
      * 書籍の初期データを投入する。
      *
-     * 要件で定められた11件を固定で登録し、登録者は User::first()（山田太郎）とする。
+     * 要件で定められた11件を固定で登録する。
+     * ★応用: 登録者はユーザーからランダムに割り当てる（マイ読書レポートで複数ユーザーの所有書籍を表示するため。
+     * 基本機能では User::first() 固定だった）。書籍タイトル・著者・ISBN・出版日・説明・画像 URL・ジャンルは基本機能版と同一。
      * firstOrCreate を用いるため、繰り返し実行しても ISBN が重複しない。
      * ジャンルはジャンル名から ID を引き、genres()->sync() で中間テーブルに紐付ける。
      */
     public function run(): void
     {
-        $user = User::first();
+        $users = User::all();
 
         $books = [
             [
@@ -111,11 +113,11 @@ class BookSeeder extends Seeder
             ],
         ];
 
-        foreach ($books as $index => $bookData) {
+        collect($books)->each(function (array $bookData, int $index) use ($users) {
             $book = Book::firstOrCreate(
                 ['isbn' => $bookData['isbn']],
                 [
-                    'user_id' => $user->id,
+                    'user_id' => $users->random()->id,
                     'title' => $bookData['title'],
                     'author' => $bookData['author'],
                     'published_date' => $bookData['published_date'],
@@ -126,6 +128,6 @@ class BookSeeder extends Seeder
 
             $genreIds = Genre::whereIn('name', $bookData['genres'])->pluck('id');
             $book->genres()->sync($genreIds);
-        }
+        });
     }
 }
