@@ -12,7 +12,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        // ★応用: 読書計画の日次バッチ（期限切れ化とリマインダー通知）。毎日 20 時（config/app.php の timezone = Asia/Tokyo 基準）
+        $schedule->command('reading-plans:process')->dailyAt('20:00');
     }
 
     /**
