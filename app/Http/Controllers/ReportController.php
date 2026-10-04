@@ -2,31 +2,28 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ReadingReportService;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
  * マイ読書レポートの画面を担当するコントローラ（★PG14）。
  *
- * Advanced ブランチの Blade 取り込み時点の骨組み。統計はすべて 0 件の状態で表示するだけで、
- * 集計はマイ読書レポートの機能ブランチで実装する。
+ * 認証必須。集計はログインユーザー自身のレビューと読書計画だけを対象にする。
  */
 class ReportController extends Controller
 {
     /**
-     * マイ読書レポートを表示する（骨組み）。
+     * マイ読書レポートを表示する。
      *
-     * Blade が参照するキー（summary / rating_distribution / top_rated_books / genre_ratings）を空の値で渡す。
+     * 集計は ReadingReportService に任せ、コントローラは受け取った結果をビューに渡すだけにする。
      *
+     * @param  ReadingReportService  $report  レポートの集計
      * @return View マイ読書レポート画面
      */
-    public function index(): View
+    public function index(Request $request, ReadingReportService $report): View
     {
-        $stats = [
-            'summary' => ['total_reviews' => 0, 'books_read' => 0, 'average_rating' => 0],
-            'rating_distribution' => collect([0, 0, 0, 0, 0]),
-            'top_rated_books' => [],
-            'genre_ratings' => [],
-        ];
+        $stats = $report->build($request->user());
 
         return view('reports.index', compact('stats'));
     }
