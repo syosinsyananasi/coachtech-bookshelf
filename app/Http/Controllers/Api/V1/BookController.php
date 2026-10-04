@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 /**
  * 公開API 書籍の CRUD を担当するコントローラ（AP01〜AP05）。
@@ -54,6 +55,7 @@ class BookController extends Controller
      *
      * 登録者は Sanctum トークンの持ち主（$request->user()）とし、そのリレーション経由で作成することで
      * user_id を設定する（Book の $fillable に user_id を含めないため）。ジャンルは保存後に中間テーブルへ sync する。
+     * 書籍の INSERT とジャンルの sync は DB::transaction() で 1 単位にする（★応用 規約 §6）。
      *
      * @param  StoreBookRequest  $request  バリデーション済みの書籍情報・ジャンルID
      * @return JsonResponse 登録した書籍（201 Created）
@@ -62,8 +64,12 @@ class BookController extends Controller
     {
         $validated = $request->validated();
 
-        $book = $request->user()->books()->create($validated);
-        $book->genres()->sync($validated['genres']);
+        $book = DB::transaction(function () use ($request, $validated) {
+            $book = $request->user()->books()->create($validated);
+            $book->genres()->sync($validated['genres']);
+
+            return $book;
+        });
 
         return (new BookResource($this->withDetails($book)))
             ->response()
@@ -89,6 +95,7 @@ class BookController extends Controller
      *
      * 所有者本人のみ許可するため BookPolicy::update で認可する（トークンの持ち主と書籍の user_id を比較）。
      * 登録者は変更しない。ジャンルは sync() で送信された内容に置き換える。
+     * 書籍の UPDATE とジャンルの sync は DB::transaction() で 1 単位にする（★応用 規約 §6）。
      *
      * @param  UpdateBookRequest  $request  バリデーション済みの書籍情報・ジャンルID
      * @param  Book  $book  更新対象の書籍
@@ -100,8 +107,10 @@ class BookController extends Controller
 
         $validated = $request->validated();
 
-        $book->update($validated);
-        $book->genres()->sync($validated['genres']);
+        DB::transaction(function () use ($book, $validated) {
+            $book->update($validated);
+            $book->genres()->sync($validated['genres']);
+        });
 
         return new BookResource($this->withDetails($book));
     }
