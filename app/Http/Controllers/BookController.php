@@ -9,6 +9,7 @@ use App\Models\Book;
 use App\Models\Genre;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 /**
@@ -85,6 +86,7 @@ class BookController extends Controller
      *
      * ログインユーザーのリレーション経由で作成することで user_id を自動設定する。
      * ジャンルは books テーブルのカラムではないため、保存後に中間テーブルへ sync する。
+     * 書籍の INSERT とジャンルの sync は DB::transaction() で 1 単位にし、途中で失敗してもジャンル無しの書籍が残らないようにする（★応用 規約 §6）。
      *
      * @param  StoreBookRequest  $request  バリデーション済みの書籍情報とジャンルID
      * @return RedirectResponse 登録した書籍の詳細へのリダイレクト（成功メッセージ付き）
@@ -95,8 +97,13 @@ class BookController extends Controller
 
         /** @var \App\Models\User $user */
         $user = auth()->user();
-        $book = $user->books()->create($validated);
-        $book->genres()->sync($validated['genres']);
+
+        $book = DB::transaction(function () use ($user, $validated) {
+            $book = $user->books()->create($validated);
+            $book->genres()->sync($validated['genres']);
+
+            return $book;
+        });
 
         return redirect()->route('books.show', $book)->with('success', '書籍を登録しました。');
     }
@@ -141,6 +148,7 @@ class BookController extends Controller
      * 書籍を更新する。
      *
      * ジャンルは sync() で送信された内容ぴったりに置き換える（差分は自動で処理される）。
+     * 書籍の UPDATE とジャンルの sync は DB::transaction() で 1 単位にする（★応用 規約 §6）。
      *
      * @param  UpdateBookRequest  $request  バリデーション済みの書籍情報とジャンルID
      * @param  Book  $book  更新対象の書籍
@@ -152,8 +160,10 @@ class BookController extends Controller
 
         $validated = $request->validated();
 
-        $book->update($validated);
-        $book->genres()->sync($validated['genres']);
+        DB::transaction(function () use ($book, $validated) {
+            $book->update($validated);
+            $book->genres()->sync($validated['genres']);
+        });
 
         return redirect()->route('books.show', $book)->with('success', '書籍を更新しました。');
     }
