@@ -69,23 +69,34 @@ class LoginTest extends TestCase
     }
 
     /**
-     * メールアドレスが未入力のとき required エラーになること。
+     * メールアドレスが未入力のとき required エラーになること（文言は PM 回答どおり）。
      */
     public function test_email_is_required(): void
     {
         $this->post(route('login'), ['email' => '', 'password' => 'password'])
-            ->assertSessionHasErrors('email');
+            ->assertSessionHasErrors(['email' => 'メールアドレスを入力してください']);
 
         $this->assertGuest();
     }
 
     /**
-     * パスワードが未入力のとき required エラーになること。
+     * メール形式でない入力のとき email エラーになり、認証処理まで進まないこと。
+     */
+    public function test_email_must_be_valid_format(): void
+    {
+        $this->post(route('login'), ['email' => 'not-an-email', 'password' => 'password'])
+            ->assertSessionHasErrors(['email' => 'メールアドレスはメール形式で入力してください']);
+
+        $this->assertGuest();
+    }
+
+    /**
+     * パスワードが未入力のとき required エラーになること（文言は PM 回答どおり）。
      */
     public function test_password_is_required(): void
     {
         $this->post(route('login'), ['email' => 'yamada@example.com', 'password' => ''])
-            ->assertSessionHasErrors('password');
+            ->assertSessionHasErrors(['password' => 'パスワードを入力してください']);
 
         $this->assertGuest();
     }
