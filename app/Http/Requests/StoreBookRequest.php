@@ -22,8 +22,8 @@ class StoreBookRequest extends FormRequest
     /**
      * 書籍登録のバリデーションルールを返す。
      *
-     * ISBN は 13桁 の文字列で、既存の書籍と重複してはならない。
-     * 説明・画像URL は任意入力、ジャンルは 1つ以上を既存ジャンルから選択する。
+     * ISBN と出版日は ★応用で任意入力（nullable）。ISBN を入力する場合は 13桁 で既存の書籍と重複してはならない。
+     * 説明・画像URL も任意入力、ジャンルは 1つ以上を既存ジャンルから選択する。
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
@@ -32,8 +32,8 @@ class StoreBookRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'author' => ['required', 'string', 'max:255'],
-            'isbn' => ['required', 'string', 'size:13', 'unique:books,isbn'],
-            'published_date' => ['required', 'date'],
+            'isbn' => ['nullable', 'string', 'size:13', 'unique:books,isbn'],
+            'published_date' => ['nullable', 'date'],
             'description' => ['nullable', 'string'],
             'image_url' => ['nullable', 'url', 'max:255'],
             'genres' => ['required', 'array'],
@@ -55,11 +55,9 @@ class StoreBookRequest extends FormRequest
             'author.required' => '著者名は必須です。',
             'author.string' => '著者名は文字列で入力してください。',
             'author.max' => '著者名は255文字以内で入力してください。',
-            'isbn.required' => 'ISBNは必須です。',
             'isbn.string' => 'ISBNは文字列で入力してください。',
             'isbn.size' => 'ISBNは13桁で入力してください。',
             'isbn.unique' => 'そのISBNは既に使用されています。',
-            'published_date.required' => '出版日は必須です。',
             'published_date.date' => '出版日は有効な日付形式で入力してください。',
             'description.string' => '説明は文字列で入力してください。',
             'image_url.url' => '画像URLは有効なURL形式で入力してください。',
