@@ -178,15 +178,15 @@ class BookStoreTest extends TestCase
     }
 
     /**
-     * ISBN が未入力のとき required エラーになること。
+     * ISBN と出版日は ★応用で任意項目のため、未入力でも保存でき、DB には null が入ること。
      */
-    public function test_isbn_is_required(): void
+    public function test_isbn_and_published_date_can_be_omitted(): void
     {
         $this->actingAs($this->user())
-            ->post(route('books.store'), $this->validData(['isbn' => '']))
-            ->assertSessionHasErrors(['isbn' => 'ISBNは必須です。']);
+            ->post(route('books.store'), $this->validData(['isbn' => '', 'published_date' => '']))
+            ->assertSessionHasNoErrors();
 
-        $this->assertDatabaseCount('books', 0);
+        $this->assertDatabaseHas('books', ['title' => 'リーダブルコード', 'isbn' => null, 'published_date' => null]);
     }
 
     /**
@@ -215,18 +215,6 @@ class BookStoreTest extends TestCase
             ->assertSessionHasErrors(['isbn' => 'そのISBNは既に使用されています。']);
 
         $this->assertDatabaseCount('books', 1);
-    }
-
-    /**
-     * 出版日が未入力のとき required エラーになること。
-     */
-    public function test_published_date_is_required(): void
-    {
-        $this->actingAs($this->user())
-            ->post(route('books.store'), $this->validData(['published_date' => '']))
-            ->assertSessionHasErrors(['published_date' => '出版日は必須です。']);
-
-        $this->assertDatabaseCount('books', 0);
     }
 
     /**

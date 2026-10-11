@@ -69,6 +69,18 @@ class BookUpdateTest extends TestCase
     }
 
     /**
+     * ISBN と出版日は ★応用で任意項目のため、編集で空にすると null で更新されること。
+     */
+    public function test_isbn_and_published_date_can_be_cleared(): void
+    {
+        $this->actingAs($this->owner)
+            ->put(route('books.update', $this->book), $this->validData(['isbn' => '', 'published_date' => '']))
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('books', ['id' => $this->book->id, 'isbn' => null, 'published_date' => null]);
+    }
+
+    /**
      * 編集画面で書籍に紐づくジャンルにチェックが入っていること。
      */
     public function test_edit_screen_has_current_genres_checked(): void
