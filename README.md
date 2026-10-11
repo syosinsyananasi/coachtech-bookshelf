@@ -327,5 +327,6 @@ app/
 ├── Policies/
 └── Services/            # Google Books 連携、レポート集計
 database/seeders/
-tests/Feature/
+tests/Unit/              # モデル・Enum の単体テスト
+tests/Feature/           # 画面・API・バッチの機能テスト
 ```
