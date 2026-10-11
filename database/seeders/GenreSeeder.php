@@ -27,8 +27,6 @@ class GenreSeeder extends Seeder
             '料理',
             '旅行',
         ];
-        foreach ($genres as $genre) {
-            Genre::firstOrCreate(['name' => $genre]);
-        }
+        collect($genres)->each(fn (string $name) => Genre::firstOrCreate(['name' => $name]));
     }
 }

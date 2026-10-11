@@ -23,11 +23,9 @@ class UserSeeder extends Seeder
             ['name' => '佐藤美咲', 'email' => 'sato@example.com'],
             ['name' => '高橋健太', 'email' => 'takahashi@example.com'],
         ];
-        foreach ($users as $user) {
-            User::firstOrCreate(
-                ['email' => $user['email']],
-                ['name' => $user['name'], 'password' => Hash::make('password')],
-            );
-        }
+        collect($users)->each(fn (array $user) => User::firstOrCreate(
+            ['email' => $user['email']],
+            ['name' => $user['name'], 'password' => Hash::make('password')],
+        ));
     }
 }
