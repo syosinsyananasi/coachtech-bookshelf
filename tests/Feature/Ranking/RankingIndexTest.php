@@ -56,6 +56,19 @@ class RankingIndexTest extends TestCase
     }
 
     /**
+     * 平均評価が同点なら ID の大きい順（登録が新しい順）に並ぶこと（PM 回答 Q-028-2）。
+     */
+    public function test_ties_are_ordered_by_id_desc(): void
+    {
+        $this->bookWithRatings('先に登録した書籍', [4]);
+        $this->bookWithRatings('後に登録した書籍', [4]);
+
+        $this->get(route('ranking.index'))
+            ->assertOk()
+            ->assertSeeInOrder(['後に登録した書籍', '先に登録した書籍']);
+    }
+
+    /**
      * 平均評価と件数が描画されること（reviews_avg_rating / reviews_count の検証）。
      */
     public function test_average_and_count_are_displayed(): void
