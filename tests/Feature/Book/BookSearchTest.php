@@ -88,7 +88,18 @@ class BookSearchTest extends TestCase
     // ---- 並び順 ----
 
     /**
-     * sort=newest は登録日時の新しい順であること。sort 未指定の既定の順は BookIndexTest で検証する。
+     * sort=latest は登録日時の新しい順であること（機能要件の正式な値。PM 回答 Q-029）。
+     */
+    public function test_sort_latest(): void
+    {
+        Book::factory()->create(['title' => '古い本', 'created_at' => now()->subDay()]);
+        Book::factory()->create(['title' => '新しい本', 'created_at' => now()]);
+
+        $this->assertSame(['新しい本', '古い本'], $this->titlesOf('?sort=latest'));
+    }
+
+    /**
+     * Blade が送る sort=newest も latest と同じ新しい順であること。sort 未指定の既定の順は BookIndexTest で検証する。
      */
     public function test_sort_newest(): void
     {

@@ -39,7 +39,7 @@ class BookController extends Controller
             ->when($validated['keyword'] ?? null, fn (Builder $query, string $keyword) => $query->whereAny(['title', 'author'], 'like', "%{$keyword}%"))
             ->when($validated['genre'] ?? null, fn (Builder $query, int $genreId) => $query->whereRelation('genres', 'genres.id', $genreId));
 
-        $books = $this->applySort($query, $validated['sort'] ?? 'newest')
+        $books = $this->applySort($query, $validated['sort'] ?? 'latest')
             ->paginate(10)
             ->appends($validated);
         $genres = Genre::all();
@@ -51,10 +51,10 @@ class BookController extends Controller
      * 一覧の並び順をクエリに適用する。
      *
      * rating は平均評価の高い順で、レビューが無い書籍（平均が NULL）は MySQL の DESC で末尾に並ぶ。
-     * 平均が同じ場合と newest は登録日時の新しい順、同時刻なら ID の大きい順で安定させる。
+     * 平均が同じ場合と latest は登録日時の新しい順、同時刻なら ID の大きい順で安定させる。
      *
      * @param  Builder<Book>  $query  絞り込み済みのクエリ
-     * @param  string  $sort  newest / oldest / rating / title
+     * @param  string  $sort  latest / oldest / rating / title（newest は Blade が送る値で latest と同じ扱い）
      * @return Builder<Book> 並び順を適用したクエリ
      */
     private function applySort(Builder $query, string $sort): Builder
