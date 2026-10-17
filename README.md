@@ -184,8 +184,6 @@ curl -X POST http://localhost/api/v1/books \
 
 ## ER 図
 
-実際のスキーマから起こしています。Laravel が内部管理に使う `migrations` テーブルは省略しています。
-
 ```mermaid
 erDiagram
     users ||--o{ books : "登録する"
@@ -302,8 +300,8 @@ erDiagram
     }
 ```
 
-複合一意制約: `book_genre(book_id, genre_id)`、`favorites(user_id, book_id)`、`review_likes(user_id, review_id)`
-`notifications` と `personal_access_tokens` はポリモーフィック関連（`notifiable_type` / `tokenable_type`）で、DB 上の外部キー制約はありません。
+- **複合一意制約**: `book_genre(book_id, genre_id)`、`favorites(user_id, book_id)`、`review_likes(user_id, review_id)`
+- **ポリモーフィック関連**: `notifications` と `personal_access_tokens` は `notifiable_type` / `tokenable_type` で関連先を表すため、DB 上の外部キー制約はありません。
 
 ## テスト
 
